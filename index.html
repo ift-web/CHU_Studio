@@ -9,6 +9,7 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
+a { color: inherit; text-decoration: none; }
 :root { --ivory:#F5F1EB; --ink:#181614; --mid:#7A7570; --warm:#C4B49C; --stone:#D8D3CB; --paper:#EDE9E2; --dark:#1C1814; }
 body { background:var(--ivory); color:var(--ink); font-family:'Barlow',sans-serif; font-weight:300; overflow-x:hidden; cursor:none; }
 
@@ -19,7 +20,7 @@ body.cursor-hover .cursor { width:16px; height:16px; background:var(–warm); }
 body.cursor-hover .cursor-ring { width:48px; height:48px; opacity:.2; }
 
 /* HEADER */
-.lang-bar { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; justify-content:space-between; align-items:center; padding:20px 40px; mix-blend-mode:multiply; }
+.lang-bar { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; justify-content:space-between; align-items:center; padding:20px 40px; background:rgba(245,241,235,0.92); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border-bottom:1px solid transparent; }
 .lang-logo { display:flex; align-items:center; gap:14px; text-decoration:none; }
 .lang-logo svg { width:32px; height:32px; }
 .lang-logo-text { font-family:‘Cormorant Garamond’,serif; font-size:15px; font-weight:400; letter-spacing:.15em; color:var(–ink); }
@@ -247,12 +248,15 @@ footer a { color:#2A2622; text-decoration:none; cursor:none; transition:color .3
 footer a:hover { color:var(–warm); }
 
 /* REVEAL */
-.reveal { opacity:0; transform:translateY(40px); transition:opacity .8s ease,transform .8s ease; }
+.reveal { opacity:0; transform:translateY(32px); transition:opacity .7s ease,transform .7s ease; }
 .reveal.visible { opacity:1; transform:translateY(0); }
 .reveal-delay-1 { transition-delay:.1s; }
 .reveal-delay-2 { transition-delay:.2s; }
 .reveal-delay-3 { transition-delay:.3s; }
 .reveal-delay-4 { transition-delay:.4s; }
+/* Hero animations always run — don’t depend on observer */
+.hero-eyebrow,.hero-title,.hero-sub,.hero-cta { opacity:0; }
+@media (prefers-reduced-motion: reduce) { .reveal,.hero-eyebrow,.hero-title,.hero-sub,.hero-cta { opacity:1 !important; transform:none !important; animation:none !important; } }
 
 /* NAV DOTS */
 .nav-dots { position:fixed; right:20px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:10px; z-index:50; }
@@ -916,8 +920,18 @@ el.addEventListener(‘mouseleave’,()=>document.body.classList.remove(‘curso
 /* ══ SCROLL REVEAL ═════════════════════════════ */
 const revealObs = new IntersectionObserver(entries=>{
 entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add(‘visible’); });
-},{ threshold:.1, rootMargin:‘0px 0px -30px 0px’ });
+},{ threshold:0.05, rootMargin:‘0px 0px -20px 0px’ });
 document.querySelectorAll(’.reveal’).forEach(el=>revealObs.observe(el));
+
+// Fallback: force-reveal anything already in viewport on load
+function revealInView() {
+document.querySelectorAll(’.reveal’).forEach(el=>{
+const r = el.getBoundingClientRect();
+if (r.top < window.innerHeight && r.bottom > 0) el.classList.add(‘visible’);
+});
+}
+revealInView();
+window.addEventListener(‘scroll’, revealInView, { passive:true });
 
 /* ══ NAV DOTS ══════════════════════════════════ */
 const navSecs = [‘sec-0’,‘sec-1’,‘work’,‘sec-3’,‘pricing’,‘contact’].map(id=>document.getElementById(id));
